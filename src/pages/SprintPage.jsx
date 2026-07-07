@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Compass, TreePine, Tent, Star, Check, Hourglass } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { buildTree, pathToStep } from '../lib/tree'
 import { addDays, daysUntil, formatDate, todayStr } from '../lib/dates'
@@ -155,9 +156,9 @@ export default function SprintPage() {
             className={`check${selected.has(node.id) ? ' done' : ''}`}
             onClick={() => toggleSelected(node.id)}
             aria-pressed={selected.has(node.id)}
-            title="Für diesen Sprint einplanen"
+            title="Für diesen Trail einplanen"
           >
-            ✓
+            <Check size={15} strokeWidth={3.2} />
           </button>
           <span className="step-title">{node.title}</span>
         </div>
@@ -183,7 +184,7 @@ export default function SprintPage() {
       .select()
       .single()
     if (error) {
-      showToast('Sprint konnte nicht gestartet werden')
+      showToast('Trail konnte nicht gestartet werden')
       return
     }
     const rows = [...selected].map((stepId) => ({
@@ -196,12 +197,12 @@ export default function SprintPage() {
     setJustFinished(null)
     await recordActivity()
     await load()
-    showToast('🧭 Sprint gestartet — gute Reise!')
+    showToast('Trail gestartet — gute Reise!')
   }
 
   // ---------- Rendering ----------
 
-  if (loading) return <div className="spinner-center">Lade Sprint …</div>
+  if (loading) return <div className="spinner-center">Lade Trail …</div>
 
   if (activeSprint) {
     const doneCount = tasks.filter((t) => stepById.get(t.step_id)?.is_done).length
@@ -221,7 +222,7 @@ export default function SprintPage() {
       <>
         <header className="page-header">
           <div>
-            <h1>🧭 Aktueller Sprint</h1>
+            <h1><Compass size={22} /> Aktueller Trail</h1>
             <p className="page-sub">
               {formatDate(activeSprint.start_date)} – {formatDate(activeSprint.end_date)}
               {' · '}
@@ -230,13 +231,13 @@ export default function SprintPage() {
                 : `seit ${-remaining} Tag${remaining === -1 ? '' : 'en'} überfällig`}
             </p>
           </div>
-          <button className="btn-ghost" onClick={finishSprint}>Sprint beenden</button>
+          <button className="btn-ghost" onClick={finishSprint}>Trail beenden</button>
         </header>
 
         {remaining < 0 && (
           <div className="hint">
-            <span>🕯️</span>
-            <span>Der Sprint-Zeitraum ist vorbei. Zeit für die Zusammenfassung — beende den Sprint, um den nächsten zu starten.</span>
+            <Hourglass size={18} />
+            <span>Der Trail-Zeitraum ist vorbei. Zeit für die Zusammenfassung — beende den Trail, um den nächsten zu starten.</span>
           </div>
         )}
 
@@ -246,7 +247,7 @@ export default function SprintPage() {
 
         {[...groups.entries()].map(([goalTitle, entries]) => (
           <div className="card" key={goalTitle}>
-            <h3>🌲 {goalTitle}</h3>
+            <h3><TreePine size={16} /> {goalTitle}</h3>
             <ul className="list-plain">
               {entries.map(({ task, info }) => {
                 const focusedToday = task.is_today_focus && task.focus_date === today
@@ -269,9 +270,9 @@ export default function SprintPage() {
                         className="icon-btn"
                         title={focusedToday ? 'Aus dem Heute-Fokus entfernen' : 'Heute in den Fokus nehmen'}
                         onClick={() => toggleFocus(task)}
-                        style={focusedToday ? { color: 'var(--light-300)', textShadow: '0 0 10px var(--glow)' } : undefined}
+                        style={focusedToday ? { color: 'var(--light-300)', filter: 'drop-shadow(0 0 6px var(--glow))' } : undefined}
                       >
-                        {focusedToday ? '★' : '☆'}
+                        <Star size={16} fill={focusedToday ? 'currentColor' : 'none'} />
                       </button>
                     </div>
                   </li>
@@ -282,34 +283,34 @@ export default function SprintPage() {
         ))}
 
         {tasks.length === 0 && (
-          <div className="empty-state">Dieser Sprint hat keine Aufgaben.</div>
+          <div className="empty-state">Dieser Trail hat keine Aufgaben.</div>
         )}
 
         <p className="faint">
-          ★ = heute im Fokus — erscheint auf der <Link to="/">Heute-Ansicht</Link>.
+          <Star size={12} /> = heute im Fokus — erscheint auf der <Link to="/">Heute-Ansicht</Link>.
         </p>
       </>
     )
   }
 
-  // Kein aktiver Sprint
+  // Kein aktiver Trail
   return (
     <>
       <header className="page-header">
         <div>
-          <h1>🧭 Sprint</h1>
-          <p className="page-sub">Kein aktiver Sprint</p>
+          <h1><Compass size={22} /> Trail</h1>
+          <p className="page-sub">Kein aktiver Trail</p>
         </div>
         {!planning && (
           <button className="btn-primary" onClick={() => setPlanning(true)}>
-            Neuen Sprint starten
+            Neuen Trail starten
           </button>
         )}
       </header>
 
       {justFinished && (
         <div className="card prominent">
-          <h2>🏕️ Sprint abgeschlossen!</h2>
+          <h2><Tent size={20} /> Trail abgeschlossen!</h2>
           <p className="muted">
             {justFinished.done} von {justFinished.total} Aufgaben erledigt
             {justFinished.total > 0 &&
@@ -321,7 +322,7 @@ export default function SprintPage() {
 
       {!planning && lastSprint && !justFinished && (
         <div className="card">
-          <h3>Letzter Sprint</h3>
+          <h3>Letzter Trail</h3>
           <p className="muted">
             {formatDate(lastSprint.start_date)} – {formatDate(lastSprint.end_date)}:{' '}
             {lastSprint.done_tasks ?? 0} von {lastSprint.total_tasks ?? 0} erledigt
@@ -334,7 +335,7 @@ export default function SprintPage() {
       {planning && (
         <>
           <div className="card prominent">
-            <h3>Sprint planen</h3>
+            <h3>Trail planen</h3>
             <p className="muted">
               Zeitraum: {formatDate(todayStr())} – {formatDate(addDays(todayStr(), 13))} (2 Wochen)
             </p>
@@ -348,7 +349,7 @@ export default function SprintPage() {
             const pickable = roots.some((r) => !r.is_done)
             return (
               <div className="card" key={goal.id}>
-                <h3>🌲 {goal.title}</h3>
+                <h3><TreePine size={16} /> {goal.title}</h3>
                 {pickable ? (
                   <ul className="list-plain">{roots.map(renderPickerNode)}</ul>
                 ) : (
@@ -371,7 +372,7 @@ export default function SprintPage() {
               Abbrechen
             </button>
             <button className="btn-primary" onClick={startSprint} disabled={selected.size === 0}>
-              Sprint starten ({selected.size} Aufgabe{selected.size === 1 ? '' : 'n'})
+              Trail starten ({selected.size} Aufgabe{selected.size === 1 ? '' : 'n'})
             </button>
           </div>
         </>

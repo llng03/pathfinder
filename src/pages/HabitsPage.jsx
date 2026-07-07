@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Repeat, Plus, Flame, Moon, Archive, Undo2, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { addDays, todayStr, weekdayShort } from '../lib/dates'
 import { currentStreak, missedTwice } from '../lib/streaks'
@@ -119,7 +120,7 @@ export default function HabitsPage() {
     <>
       <header className="page-header">
         <div>
-          <h1>🔁 Routinen</h1>
+          <h1><Repeat size={22} /> Routinen</h1>
           <p className="page-sub">Kleine Pfade, täglich gegangen</p>
         </div>
       </header>
@@ -131,7 +132,7 @@ export default function HabitsPage() {
           placeholder="Neue Gewohnheit (z. B. Gym, Lesen …)"
           required
         />
-        <button type="submit" className="btn-primary">＋</button>
+        <button type="submit" className="btn-primary"><Plus size={16} /></button>
       </form>
 
       {activeHabits.length === 0 && (
@@ -161,16 +162,16 @@ export default function HabitsPage() {
                 <h3 style={{ margin: 0 }}>{habit.title}</h3>
               </div>
               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                {streak > 0 && <span className="chip focus">🔥 {streak} Tage</span>}
+                {streak > 0 && <span className="chip focus"><Flame /> {streak} Tage</span>}
                 <button className="icon-btn" title="Archivieren" onClick={() => setArchived(habit, true)}>
-                  📦
+                  <Archive size={15} />
                 </button>
               </div>
             </div>
 
             {showMissedHint && (
               <p className="muted" style={{ margin: '0.5rem 0' }}>
-                🌙 Zwei Tage Pause — halb so wild. Heute zählt.
+                <Moon size={13} /> Zwei Tage Pause — halb so wild. Heute zählt.
               </p>
             )}
 
@@ -193,13 +194,13 @@ export default function HabitsPage() {
             archivedHabits.map((habit) => (
               <div className="card" key={habit.id} style={{ opacity: 0.65 }}>
                 <div className="card-title-row">
-                  <span>📦 {habit.title}</span>
+                  <span><Archive size={14} /> {habit.title}</span>
                   <span style={{ display: 'flex', gap: '4px' }}>
                     <button className="icon-btn" title="Reaktivieren" onClick={() => setArchived(habit, false)}>
-                      ↩
+                      <Undo2 size={15} />
                     </button>
                     <button className="icon-btn" title="Löschen" onClick={() => deleteHabit(habit)}>
-                      🗑
+                      <Trash2 size={15} />
                     </button>
                   </span>
                 </div>

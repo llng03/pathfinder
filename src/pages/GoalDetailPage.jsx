@@ -1,5 +1,21 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import {
+  TreePine,
+  Mountain,
+  TriangleAlert,
+  CalendarDays,
+  Compass,
+  ChevronRight,
+  ChevronDown,
+  Plus,
+  Pencil,
+  ArrowUp,
+  ArrowDown,
+  Trash2,
+  Undo2,
+  X,
+} from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import {
   buildTree,
@@ -139,7 +155,7 @@ export default function GoalDetailPage() {
       })
       .eq('id', goalId)
     await load()
-    if (status === 'completed') showToast('🏔️ Ziel abgeschlossen — stark!')
+    if (status === 'completed') showToast('Ziel abgeschlossen — stark!')
   }
 
   async function deleteGoal() {
@@ -171,7 +187,7 @@ export default function GoalDetailPage() {
               }
               aria-label={isCollapsed ? 'Ausklappen' : 'Einklappen'}
             >
-              {isCollapsed ? '▸' : '▾'}
+              {isCollapsed ? <ChevronRight size={13} /> : <ChevronDown size={13} />}
             </button>
           ) : (
             <span className="twisty" />
@@ -206,27 +222,27 @@ export default function GoalDetailPage() {
             </span>
           )}
 
-          {clarify && <span className="chip clarify">⚠ Klärung</span>}
+          {clarify && <span className="chip clarify"><TriangleAlert /> Klärung</span>}
 
           <span className="row-actions">
             <button className="icon-btn" title="Unterschritt hinzufügen"
               onClick={() => { setAddTargetId(node.id); setAddText('') }}>
-              ＋
+              <Plus size={15} />
             </button>
             <button className="icon-btn" title="Umbenennen"
               onClick={() => { setEditingId(node.id); setEditText(node.title) }}>
-              ✎
+              <Pencil size={14} />
             </button>
             <button className="icon-btn" title="Nach oben"
               onClick={() => moveStep(node, siblings, -1)}>
-              ↑
+              <ArrowUp size={14} />
             </button>
             <button className="icon-btn" title="Nach unten"
               onClick={() => moveStep(node, siblings, 1)}>
-              ↓
+              <ArrowDown size={14} />
             </button>
             <button className="icon-btn" title="Löschen" onClick={() => deleteStep(node)}>
-              🗑
+              <Trash2 size={14} />
             </button>
           </span>
         </div>
@@ -241,7 +257,7 @@ export default function GoalDetailPage() {
             />
             <button type="submit" className="btn-primary btn-sm">OK</button>
             <button type="button" className="btn-ghost btn-sm" onClick={() => setAddTargetId(undefined)}>
-              ✕
+              <X size={14} />
             </button>
           </form>
         )}
@@ -267,7 +283,7 @@ export default function GoalDetailPage() {
   return (
     <>
       <div className="breadcrumb">
-        <Link to="/ziele">🌲 Ziele</Link>
+        <Link to="/ziele"><TreePine size={14} /> Ziele</Link>
         <span>/</span>
         <button onClick={() => setFocusStepId(null)}>{goal.title}</button>
         {breadcrumbPath.map((node) => (
@@ -282,12 +298,14 @@ export default function GoalDetailPage() {
         <header className="card prominent">
           <div className="card-title-row">
             <h1>{goal.title}</h1>
-            {goal.status === 'completed' && <span className="chip focus">🏔️ Abgeschlossen</span>}
+            {goal.status === 'completed' && (
+              <span className="chip focus"><Mountain /> Abgeschlossen</span>
+            )}
           </div>
           {goal.description && <p className="muted">{goal.description}</p>}
           {goal.target_date && (
             <p className="faint">
-              🗓 Zieldatum: {formatDate(goal.target_date)}
+              <CalendarDays size={13} /> Zieldatum: {formatDate(goal.target_date)}
               {goal.target_date < todayStr() && goal.status === 'active' && ' — liegt in der Vergangenheit'}
             </p>
           )}
@@ -303,7 +321,7 @@ export default function GoalDetailPage() {
               {focusNode.title}
             </h2>
             {stepNeedsClarification(focusNode) && (
-              <span className="chip clarify">⚠ Braucht Klärung</span>
+              <span className="chip clarify"><TriangleAlert /> Braucht Klärung</span>
             )}
           </div>
         </header>
@@ -311,7 +329,7 @@ export default function GoalDetailPage() {
 
       {needsClarification && !focusNode && (
         <div className="hint">
-          <span>🧭</span>
+          <Compass size={18} />
           <span>
             Hier fehlt gerade eine konkrete nächste Handlung.{' '}
             <strong>Was ist der nächste kleine Schritt?</strong> Füge ihn unten hinzu —
@@ -340,18 +358,18 @@ export default function GoalDetailPage() {
           }}
           placeholder={focusNode ? 'Neuen Unterschritt hinzufügen …' : 'Neuen Schritt hinzufügen …'}
         />
-        <button type="submit" className="btn-primary">＋</button>
+        <button type="submit" className="btn-primary"><Plus size={16} /></button>
       </form>
 
       {!focusNode && (
         <div className="section-gap" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           {goal.status === 'active' ? (
             <button className="btn-ghost" onClick={() => setGoalStatus('completed')}>
-              🏔️ Ziel abschließen
+              <Mountain size={15} /> Ziel abschließen
             </button>
           ) : (
             <button className="btn-ghost" onClick={() => setGoalStatus('active')}>
-              ↩ Wieder aktivieren
+              <Undo2 size={15} /> Wieder aktivieren
             </button>
           )}
           <button className="btn-danger" onClick={deleteGoal}>Ziel löschen</button>

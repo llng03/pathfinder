@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Sparkles, Flame } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { BADGES } from '../lib/badges'
 import { currentStreak } from '../lib/streaks'
@@ -50,19 +51,19 @@ export default function StatsPage() {
     <>
       <header className="page-header">
         <div>
-          <h1>✨ Erfolge</h1>
+          <h1><Sparkles size={22} /> Erfolge</h1>
           <p className="page-sub">Das Licht, das du schon entzündet hast</p>
         </div>
       </header>
 
       <div className="stat-grid">
         <div className="stat-card">
-          <div className="stat-value">🔥 {streak}</div>
+          <div className="stat-value"><Flame size={22} /> {streak}</div>
           <div className="stat-label">Tage-Streak (aktiv)</div>
         </div>
         <div className="stat-card">
           <div className="stat-value">{sprints.length}</div>
-          <div className="stat-label">Abgeschlossene Sprints</div>
+          <div className="stat-label">Abgeschlossene Trails</div>
         </div>
         <div className="stat-card">
           <div className="stat-value">{successRate !== null ? `${successRate}%` : '—'}</div>
@@ -80,7 +81,7 @@ export default function StatsPage() {
           const earned = earnedByKey.get(key)
           return (
             <div className={`badge-card ${earned ? 'earned' : 'locked'}`} key={key}>
-              <span className="badge-icon">{badge.icon}</span>
+              <span className="badge-icon"><badge.icon size={30} strokeWidth={1.6} /></span>
               <strong>{badge.title}</strong>
               <p className="faint">{badge.description}</p>
               {earned && (

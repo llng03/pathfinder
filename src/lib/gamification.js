@@ -41,5 +41,5 @@ export async function recordActivity() {
 
 export function badgeToastText(badgeKey) {
   const badge = BADGES[badgeKey]
-  return badge ? `${badge.icon} Erfolg freigeschaltet: ${badge.title}` : null
+  return badge ? `Erfolg freigeschaltet: ${badge.title}` : null
 }

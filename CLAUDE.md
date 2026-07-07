@@ -1,6 +1,6 @@
 # Projekt: Pathfinder — Your little guide through the big woods
 
-Persönliche PWA zur Zielsetzung mit 2-Wochen-Sprints, manueller Zielzerlegung,
+Persönliche PWA zur Zielsetzung mit 2-Wochen-trails, manueller Zielzerlegung,
 Gewohnheiten-Tracking und motivierendem Fortschritts-Feedback. Single-User
 (keine Multi-User-Logik nötig). Details siehe `docs/anforderungsdokument.md`.
 
@@ -33,20 +33,20 @@ wird über den Supabase SQL Editor eingespielt.
 
 ## Datenmodell (Kerntabellen)
 
-`Ideas`, `Goals`, `Steps`, `Sprints`, `SprintTasks`, `Habits`, `HabitLogs`,
+`Ideas`, `Goals`, `Steps`, `trails`, `trailTasks`, `Habits`, `HabitLogs`,
 `Streaks`/`Badges`. Details und Feldbedeutungen: siehe `docs/build-prompt.md`.
 
 Wichtige Flags nicht vergessen:
 - `Steps.parent_step_id` (nullable, self-referencing) — ermöglicht unbegrenzt tiefe Verschachtelung von Schritten in Unterschritte
-- `SprintTasks.step_id` referenziert einen Step auf beliebiger Baumtiefe (nicht nur Blätter)
-- `SprintTasks.is_today_focus` (boolean) — für die Fokusaufgaben-Ansicht
+- `trailTasks.step_id` referenziert einen Step auf beliebiger Baumtiefe (nicht nur Blätter)
+- `trailTasks.is_today_focus` (boolean) — für die Fokusaufgaben-Ansicht
 - `Goals`/`Steps` brauchen einen abgeleiteten "Braucht Klärung"-Status: **rekursiv über den gesamten Unterbaum** — markiert, wenn offen UND kein offener, kindloser Schritt irgendwo darunter existiert (nicht mehr nur "hat direkte Kinder oder nicht")
 
 ## Kernkonventionen
 
-- **Kein Kanban-Board.** Sprintaufgaben werden abgehakt, nicht durch Statusspalten bewegt.
-- **Schritte sind unbegrenzt tief verschachtelbar** (Steps können eigene Unterschritte haben). Jede Ebene ist einzeln einplanbar (Sprint) und einzeln abhakbar.
-- **"Heute"-Ansicht ist der Standard-Startbildschirm**, nicht die volle Sprintliste.
+- **Kein Kanban-Board.** trailaufgaben werden abgehakt, nicht durch Statusspalten bewegt.
+- **Schritte sind unbegrenzt tief verschachtelbar** (Steps können eigene Unterschritte haben). Jede Ebene ist einzeln einplanbar (trail) und einzeln abhakbar.
+- **"Heute"-Ansicht ist der Standard-Startbildschirm**, nicht die volle trailliste.
 - **KI-Vorschläge (falls in v2 ergänzt) werden nie automatisch übernommen** — Nutzerin muss jeden Schritt bestätigen/bearbeiten können.
 - **Keine Push-Notifications.** Hinweise (z. B. "Never miss twice") erscheinen nur In-App beim nächsten Öffnen.
 - **Design:** Pathfinder-Branding — dunkelgrüne Basis, warme Lichtakzente, "Licht durch den dunklen Wald"-Atmosphäre (siehe Abschnitt Branding & Design oben). Keine nüchterne "Business-Tool"-Optik, aber gute Lesbarkeit hat Priorität.

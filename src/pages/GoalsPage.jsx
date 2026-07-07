@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { TreePine, Mountain, TriangleAlert, CalendarDays } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { buildTree, countSteps, goalNeedsClarification } from '../lib/tree'
 import { formatDate } from '../lib/dates'
@@ -62,12 +63,17 @@ export default function GoalsPage() {
       <Link to={`/ziele/${goal.id}`} key={goal.id} style={{ color: 'inherit' }}>
         <div className={`card${needsClarification ? ' clarify' : ''}`}>
           <div className="card-title-row">
-            <h3>{goal.status === 'completed' ? '🏔️ ' : ''}{goal.title}</h3>
-            {needsClarification && <span className="chip clarify">⚠ Braucht Klärung</span>}
+            <h3>
+              {goal.status === 'completed' && <Mountain size={16} />}
+              {goal.title}
+            </h3>
+            {needsClarification && (
+              <span className="chip clarify"><TriangleAlert /> Braucht Klärung</span>
+            )}
           </div>
           {goal.description && <p className="muted">{goal.description}</p>}
           {goal.target_date && (
-            <p className="faint">🗓 Zieldatum: {formatDate(goal.target_date)}</p>
+            <p className="faint"><CalendarDays size={13} /> Zieldatum: {formatDate(goal.target_date)}</p>
           )}
           <div style={{ marginTop: '0.6rem' }}>
             <ProgressBar done={done} total={total} />
@@ -86,7 +92,7 @@ export default function GoalsPage() {
     <>
       <header className="page-header">
         <div>
-          <h1>🌲 Ziele</h1>
+          <h1><TreePine size={22} /> Ziele</h1>
           <p className="page-sub">Deine Pfade durch den Wald</p>
         </div>
         <button className="btn-primary" onClick={() => setShowForm(!showForm)}>

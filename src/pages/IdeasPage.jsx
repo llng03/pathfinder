@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Lightbulb, Sprout, Leaf, Undo2, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { recordActivity, awardBadge, badgeToastText } from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
@@ -97,7 +98,7 @@ export default function IdeasPage() {
     <>
       <header className="page-header">
         <div>
-          <h1>💡 Ideenpool</h1>
+          <h1><Lightbulb size={22} /> Ideenpool</h1>
           <p className="page-sub">Parkplatz für alles, was (noch) kein Ziel ist</p>
         </div>
       </header>
@@ -158,7 +159,7 @@ export default function IdeasPage() {
               Verwerfen
             </button>
             <button className="btn-primary btn-sm" onClick={() => convertToGoal(idea)}>
-              🌱 Zu Ziel machen
+              <Sprout size={14} /> Zu Ziel machen
             </button>
           </div>
         </div>
@@ -174,17 +175,19 @@ export default function IdeasPage() {
               <div className="card" key={idea.id} style={{ opacity: 0.65 }}>
                 <div className="card-title-row">
                   <span>
-                    {idea.status === 'converted' ? '🌱 ' : '🍂 '}
+                    {idea.status === 'converted'
+                      ? <Sprout size={14} />
+                      : <Leaf size={14} />}{' '}
                     {idea.title}
                   </span>
                   <span style={{ display: 'flex', gap: '4px' }}>
                     {idea.status === 'discarded' && (
                       <button className="icon-btn" title="Wieder aufnehmen" onClick={() => reopenIdea(idea)}>
-                        ↩
+                        <Undo2 size={15} />
                       </button>
                     )}
                     <button className="icon-btn" title="Löschen" onClick={() => deleteIdea(idea)}>
-                      🗑
+                      <Trash2 size={15} />
                     </button>
                   </span>
                 </div>

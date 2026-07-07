@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Sun, Flame, Moon, Sparkles, Compass, TreePine, X } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { buildTree, firstOpenLeaf, goalNeedsClarification, pathToStep } from '../lib/tree'
 import { formatDate, todayStr } from '../lib/dates'
@@ -167,12 +168,12 @@ export default function TodayPage() {
     <>
       <header className="page-header">
         <div>
-          <h1>☀️ Heute</h1>
+          <h1><Sun size={22} /> Heute</h1>
           <p className="page-sub">{formatDate(today)}</p>
         </div>
         {activityStreak > 0 && (
           <span className="chip focus" title="Tage in Folge aktiv">
-            🔥 {activityStreak} Tag{activityStreak === 1 ? '' : 'e'}
+            <Flame /> {activityStreak} Tag{activityStreak === 1 ? '' : 'e'}
           </span>
         )}
       </header>
@@ -180,7 +181,7 @@ export default function TodayPage() {
       {/* Sanfter Never-miss-twice-Hinweis (rein In-App) */}
       {missedHabits.length > 0 && (
         <div className="hint gentle">
-          <span>🌙</span>
+          <Moon size={18} />
           <span>
             {missedHabits.map((h) => h.title).join(', ')}{' '}
             {missedHabits.length === 1 ? 'wartet' : 'warten'} seit zwei Tagen auf dich.
@@ -192,13 +193,15 @@ export default function TodayPage() {
       {/* Nächster Schritt — prominent */}
       {nextStep && (
         <div className="card prominent">
-          <p className="faint" style={{ marginBottom: '0.35rem' }}>✨ Dein nächster Schritt</p>
+          <p className="faint" style={{ marginBottom: '0.35rem' }}>
+            <Sparkles size={13} /> Dein nächster Schritt
+          </p>
           <div className="tree-row">
             <CheckButton done={false} onToggle={() => toggleStepDone(nextStep.leaf)} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <strong>{nextStep.leaf.title}</strong>
               <span className="faint" style={{ display: 'block' }}>
-                🌲 {nextStep.goal?.title}
+                <TreePine size={12} /> {nextStep.goal?.title}
                 {nextStep.parents.length > 0 && ` › ${nextStep.parents.join(' › ')}`}
               </span>
             </div>
@@ -209,7 +212,7 @@ export default function TodayPage() {
       {/* Braucht Klärung */}
       {clarifyGoals.length > 0 && (
         <div className="hint">
-          <span>🧭</span>
+          <Compass size={18} />
           <span>
             <strong>Braucht Klärung:</strong>{' '}
             {clarifyGoals.map((g, i) => (
@@ -230,12 +233,12 @@ export default function TodayPage() {
           {sprint ? (
             <>
               Noch keine Fokusaufgaben für heute.<br />
-              Wähle im <Link to="/sprint">Sprint</Link> Aufgaben mit ★ aus.
+              Wähle im <Link to="/sprint">Trail</Link> Aufgaben mit ★ aus.
             </>
           ) : (
             <>
-              Kein aktiver Sprint.<br />
-              <Link to="/sprint">Starte einen Sprint</Link>, um Aufgaben für heute zu planen.
+              Kein aktiver Trail.<br />
+              <Link to="/sprint">Starte einen Trail</Link>, um Aufgaben für heute zu planen.
             </>
           )}
         </div>
@@ -257,7 +260,7 @@ export default function TodayPage() {
                       title="Aus der Tagesauswahl entfernen (bleibt im Sprint)"
                       onClick={() => removeFocus(task)}
                     >
-                      ✕
+                      <X size={15} />
                     </button>
                   </div>
                 </li>
@@ -271,7 +274,7 @@ export default function TodayPage() {
       {sprint && (
         <div className="card">
           <div className="card-title-row">
-            <h3>🧭 Sprint-Fortschritt</h3>
+            <h3><Compass size={16} /> Sprint-Fortschritt</h3>
             <Link to="/sprint" className="faint">zur Übersicht →</Link>
           </div>
           <ProgressBar done={sprintDone} total={tasks.length} />
@@ -299,7 +302,7 @@ export default function TodayPage() {
                         {habit.title}
                       </span>
                       {streak > 0 && (
-                        <span className="chip" title="Aktuelle Serie">🔥 {streak}</span>
+                        <span className="chip" title="Aktuelle Serie"><Flame /> {streak}</span>
                       )}
                     </div>
                   </li>

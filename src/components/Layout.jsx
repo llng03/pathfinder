@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom'
+import { Sun, TreePine, Compass, Lightbulb, Repeat, Sparkles } from 'lucide-react'
 import foxIcon from '../assets/foxIcon.png'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Heute', icon: '☀️', end: true },
-  { to: '/ziele', label: 'Ziele', icon: '🌲' },
-  { to: '/sprint', label: 'Sprint', icon: '🧭' },
-  { to: '/ideen', label: 'Ideen', icon: '💡' },
-  { to: '/gewohnheiten', label: 'Routinen', icon: '🔁' },
-  { to: '/erfolge', label: 'Erfolge', icon: '✨' },
+  { to: '/', label: 'Heute', icon: Sun, end: true },
+  { to: '/ziele', label: 'Ziele', icon: TreePine },
+  { to: '/sprint', label: 'Sprint', icon: Compass },
+  { to: '/ideen', label: 'Ideen', icon: Lightbulb },
+  { to: '/gewohnheiten', label: 'Routinen', icon: Repeat },
+  { to: '/erfolge', label: 'Erfolge', icon: Sparkles },
 ]
 
 export default function Layout({ children }) {
@@ -28,7 +29,9 @@ export default function Layout({ children }) {
             end={item.end}
             className={({ isActive }) => (isActive ? 'active' : undefined)}
           >
-            <span className="nav-icon" aria-hidden>{item.icon}</span>
+            <span className="nav-icon" aria-hidden>
+              <item.icon size={20} strokeWidth={1.8} />
+            </span>
             <span>{item.label}</span>
           </NavLink>
         ))}

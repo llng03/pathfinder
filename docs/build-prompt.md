@@ -9,7 +9,7 @@
 Baue **Pathfinder**, eine persönliche Produktivitäts- und Zielsetzungs-App
 als Progressive Web App (PWA). Zielgruppe: eine einzelne Nutzerin (kein
 Multi-User/Sharing nötig). Ziel ist ein System, das Ideen sammelt, Ziele in
-Etappen zerlegt, diese in 2-Wochen-Sprints plant und den Fortschritt
+Etappen zerlegt, diese in 2-Wochen-trails plant und den Fortschritt
 motivierend visualisiert.
 
 ## Tech-Stack
@@ -49,28 +49,28 @@ motivierend visualisiert.
   (kann als spätere UX-Verbesserung ergänzt werden, ist aber kein Muss)
 - Kein KI-Feature in dieser Version — Zerlegung erfolgt komplett manuell
 
-### 3. Sprintplanung (2-Wochen-Rhythmus)
-- Sprint = fester 2-Wochen-Zeitraum (Start-/Enddatum automatisch berechnet
+### 3. trailplanung (2-Wochen-Rhythmus)
+- trail = fester 2-Wochen-Zeitraum (Start-/Enddatum automatisch berechnet
   ab Startklick)
-- Beim Sprintstart: Schritte aus bestehenden Zielen auswählen und dem
-  Sprint fest zuordnen — **auf jeder beliebigen Ebene der Baumstruktur**
+- Beim trailstart: Schritte aus bestehenden Zielen auswählen und dem
+  trail fest zuordnen — **auf jeder beliebigen Ebene der Baumstruktur**
   (ein großer Teilschritt oder ein kleiner Unter-Unterschritt können
-  gleichermaßen direkt eingeplant werden). `SprintTasks` referenziert daher
+  gleichermaßen direkt eingeplant werden). `trailTasks` referenziert daher
   einfach eine `step_id`, unabhängig von deren Tiefe im Baum. Keine
   Statusspalten/Kanban — einfaches Abhaken.
-- Am Sprintende: Zusammenfassungs-Screen (erledigt vs. offen, Erfolgsquote)
-- Neuer Sprint kann erst gestartet werden, wenn vorheriger beendet oder
+- Am trailende: Zusammenfassungs-Screen (erledigt vs. offen, Erfolgsquote)
+- Neuer trail kann erst gestartet werden, wenn vorheriger beendet oder
   bewusst übersprungen wurde
 
 ### 4. Fortschritt & Motivation
 - Fortschrittsbalken pro Ziel (Anteil erledigter Teilschritte)
-- Fortschrittsanzeige für den laufenden Sprint
+- Fortschrittsanzeige für den laufenden trail
 - Prominente "Nächster Schritt"-Karte auf dem Dashboard (zeigt einen
   konkreten, nicht weiter unterteilten offenen Schritt — also die unterste
   offene Ebene im Baum, kein großes Teilziel)
 - Gamification: Streak-Zähler (aufeinanderfolgende aktive Tage), Badges/
-  Erfolge (z. B. "Erster Sprint abgeschlossen", "7-Tage-Streak"), einfache
-  Statistik-Übersicht (abgeschlossene Sprints, Erfolgsquote insgesamt)
+  Erfolge (z. B. "Erster trail abgeschlossen", "7-Tage-Streak"), einfache
+  Statistik-Übersicht (abgeschlossene trails, Erfolgsquote insgesamt)
 - Kein KI-gestützter Analyse-Button in dieser Version
 
 ### 5. Design & Branding
@@ -88,20 +88,20 @@ motivierend visualisiert.
   "Lichtstrahl", Badges/Erfolge mit leuchtendem Glow-Effekt)
 - Aufgeräumt trotz dunklem Grundton — gute Lesbarkeit hat Priorität vor Optik
 - Klare visuelle Belohnung bei erledigten Aufgaben (z. B. kurzes Aufleuchten/
-  Glow, sanfte Licht-Animation bei Sprintabschluss)
+  Glow, sanfte Licht-Animation bei trailabschluss)
 - Klare visuelle Hierarchie zwischen "was ist als Nächstes dran" (hell/
   prominent) und Detailinformationen (zurückhaltender, dunkler)
 
 ### 6. Fokusaufgaben für heute
-- Aus den Aufgaben des aktuellen Sprints beliebig viele (kein Limit) als
+- Aus den Aufgaben des aktuellen trails beliebig viele (kein Limit) als
   "heute im Fokus" markieren
 - Eigene "Heute"-Ansicht als Standard-Startbildschirm: zeigt NUR die heute
-  markierten Aufgaben, nicht die komplette Sprintliste
-- Sprint-Gesamtübersicht bleibt über eigene Navigation erreichbar, ist aber
+  markierten Aufgaben, nicht die komplette trailliste
+- trail-Gesamtübersicht bleibt über eigene Navigation erreichbar, ist aber
   nicht die Default-Ansicht
 - Aufgaben können jederzeit aus der Tagesauswahl entfernt werden, ohne aus
-  dem Sprint gelöscht zu werden
-- Nicht heute erledigte Fokusaufgaben bleiben unverändert im Sprint und
+  dem trail gelöscht zu werden
+- Nicht heute erledigte Fokusaufgaben bleiben unverändert im trail und
   können am nächsten Tag erneut ausgewählt werden (kein automatisches
   Verschwinden/Verfallen)
 
@@ -135,7 +135,7 @@ motivierend visualisiert.
   "keine Notifications"-Vorgabe)
 
 ## Nicht-funktionale Vorgaben
-- Kernansichten (Dashboard, aktueller Sprint) sollen schnell laden
+- Kernansichten (Dashboard, aktueller trail) sollen schnell laden
 - Keine Erinnerungen/Notifications in dieser Version
 - Architektur so anlegen, dass Notifications später ergänzbar wären, ohne
   alles umzubauen
@@ -143,16 +143,16 @@ motivierend visualisiert.
 
 ## Vorgehen
 1. Schlage zunächst eine Datenbank-/Tabellenstruktur in Supabase vor
-   (Tabellen für Ideas, Goals, Steps, Sprints, SprintTasks, Streaks/Badges,
+   (Tabellen für Ideas, Goals, Steps, trails, trailTasks, Streaks/Badges,
    Habits, HabitLogs (Datum + erledigt-Status pro Gewohnheit und Tag);
    **Steps braucht `parent_step_id` (nullable, self-referencing) für
-   unbegrenzt tiefe Verschachtelung**; SprintTasks referenziert `step_id`
+   unbegrenzt tiefe Verschachtelung**; trailTasks referenziert `step_id`
    unabhängig von der Tiefe im Baum; Goals/Steps brauchen eine ableitbare
    "Braucht Klärung"-Logik über den gesamten Unterbaum)
 2. Setze das Projekt-Grundgerüst auf (Vite + React + PWA-Setup + Supabase-
    Client) — keine Anthropic-API-Anbindung nötig
 3. Baue die Features iterativ in dieser Reihenfolge: Ideenpool → Ziele &
-   manuelle Teilschritte (inkl. "Braucht Klärung"-Markierung) → Sprintplanung
+   manuelle Teilschritte (inkl. "Braucht Klärung"-Markierung) → trailplanung
    → Fokusaufgaben-Ansicht für heute → Fortschrittsanzeige → Gamification →
    Gewohnheiten-Tracking (Heatmap & Never-miss-twice)
 4. Frage nach, falls für ein Feature eine Design- oder Datenmodell-

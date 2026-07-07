@@ -476,7 +476,12 @@ label { font-size: 0.82rem; color: var(--text-dim); display: block; margin-botto
   border: 1px solid var(--forest-700);
   background: var(--forest-850);
 }
-.badge-card .badge-icon { font-size: 1.8rem; display: block; margin-bottom: 0.35rem; }
+.badge-card .badge-icon {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-dim);
+}
+.badge-card.earned .badge-icon { color: var(--light-300); }
 .badge-card.earned {
   border-color: rgba(255, 196, 102, 0.5);
   box-shadow: 0 0 22px var(--glow-soft);
@@ -574,6 +579,29 @@ label { font-size: 0.82rem; color: var(--text-dim); display: block; margin-botto
   font-size: 0.88rem;
   margin-bottom: 1.5rem;
 }
+
+/* ---------- Icons (lucide) ---------- */
+
+svg.lucide {
+  vertical-align: -0.18em;
+  flex-shrink: 0;
+}
+
+h1 svg.lucide, h2 svg.lucide, h3 svg.lucide {
+  margin-right: 8px;
+  color: var(--light-300);
+  filter: drop-shadow(0 0 6px var(--glow-soft));
+}
+
+.chip svg.lucide { width: 12px; height: 12px; }
+
+button svg.lucide { vertical-align: -0.15em; }
+
+.hint > svg.lucide {
+  margin-top: 2px;
+  color: var(--clarify);
+}
+.hint.gentle > svg.lucide { color: var(--text-dim); }
 
 /* ---------- Diverses ---------- */
 
