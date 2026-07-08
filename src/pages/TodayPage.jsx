@@ -274,7 +274,7 @@ export default function TodayPage() {
       {sprint && (
         <div className="card">
           <div className="card-title-row">
-            <h3><Compass size={16} /> Sprint-Fortschritt</h3>
+            <h3><Compass size={16} /> Trail-Fortschritt</h3>
             <Link to="/sprint" className="faint">zur Übersicht →</Link>
           </div>
           <ProgressBar done={sprintDone} total={tasks.length} />

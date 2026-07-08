@@ -5,7 +5,7 @@ import foxIcon from '../assets/foxIcon.png'
 const NAV_ITEMS = [
   { to: '/', label: 'Heute', icon: Sun, end: true },
   { to: '/ziele', label: 'Ziele', icon: TreePine },
-  { to: '/sprint', label: 'Sprint', icon: Compass },
+  { to: '/sprint', label: 'Trail', icon: Compass },
   { to: '/ideen', label: 'Ideen', icon: Lightbulb },
   { to: '/gewohnheiten', label: 'Routinen', icon: Repeat },
   { to: '/erfolge', label: 'Erfolge', icon: Sparkles },

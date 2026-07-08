@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Compass, TreePine, Tent, Star, Check, Hourglass } from 'lucide-react'
+import { Compass, TreePine, Tent, Star, Check, Hourglass, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { buildTree, pathToStep } from '../lib/tree'
 import { addDays, daysUntil, formatDate, todayStr } from '../lib/dates'
@@ -18,8 +18,9 @@ export default function SprintPage() {
   const [goals, setGoals] = useState([])
   const [steps, setSteps] = useState([])
 
-  // Planungs-UI
+  // Planungs-UI (auch für Nachplanung im aktiven Trail)
   const [planning, setPlanning] = useState(false)
+  const [adding, setAdding] = useState(false)
   const [selected, setSelected] = useState(new Set())
   const [justFinished, setJustFinished] = useState(null)
 
@@ -145,22 +146,35 @@ export default function SprintPage() {
     })
   }
 
-  // Nur offene Schritte sind planbar; erledigte Äste werden ausgeblendet
+  // Nur offene Schritte sind planbar; erledigte Äste werden ausgeblendet.
+  // Schritte, die schon im Trail sind, werden markiert statt erneut anwählbar.
+  const stepIdsInSprint = useMemo(() => new Set(tasks.map((t) => t.step_id)), [tasks])
+
   function renderPickerNode(node) {
     if (node.is_done) return null
+    const alreadyInSprint = stepIdsInSprint.has(node.id)
     return (
       <li className="tree-node" key={node.id}>
         <div className="tree-row">
-          <button
-            type="button"
-            className={`check${selected.has(node.id) ? ' done' : ''}`}
-            onClick={() => toggleSelected(node.id)}
-            aria-pressed={selected.has(node.id)}
-            title="Für diesen Trail einplanen"
-          >
-            <Check size={15} strokeWidth={3.2} />
-          </button>
-          <span className="step-title">{node.title}</span>
+          {alreadyInSprint ? (
+            <span className="check done" title="Bereits im Trail" style={{ opacity: 0.5 }}>
+              <Check size={15} strokeWidth={3.2} />
+            </span>
+          ) : (
+            <button
+              type="button"
+              className={`check${selected.has(node.id) ? ' done' : ''}`}
+              onClick={() => toggleSelected(node.id)}
+              aria-pressed={selected.has(node.id)}
+              title="Für diesen Trail einplanen"
+            >
+              <Check size={15} strokeWidth={3.2} />
+            </button>
+          )}
+          <span className="step-title">
+            {node.title}
+            {alreadyInSprint && <span className="faint"> — bereits im Trail</span>}
+          </span>
         </div>
         {node.children.length > 0 && (
           <ul className="list-plain tree-children">
@@ -200,6 +214,25 @@ export default function SprintPage() {
     showToast('Trail gestartet — gute Reise!')
   }
 
+  // Aufgaben nachträglich in den laufenden Trail aufnehmen
+  async function addTasksToSprint() {
+    if (selected.size === 0) return
+    const rows = [...selected].map((stepId) => ({
+      sprint_id: activeSprint.id,
+      step_id: stepId,
+    }))
+    const { error } = await supabase.from('sprint_tasks').insert(rows)
+    if (error) {
+      showToast('Aufgaben konnten nicht hinzugefügt werden')
+      return
+    }
+    const count = selected.size
+    setSelected(new Set())
+    setAdding(false)
+    await load()
+    showToast(`${count} Aufgabe${count === 1 ? '' : 'n'} zum Trail hinzugefügt`)
+  }
+
   // ---------- Rendering ----------
 
   if (loading) return <div className="spinner-center">Lade Trail …</div>
@@ -231,7 +264,17 @@ export default function SprintPage() {
                 : `seit ${-remaining} Tag${remaining === -1 ? '' : 'en'} überfällig`}
             </p>
           </div>
-          <button className="btn-ghost" onClick={finishSprint}>Trail beenden</button>
+          <div className="form-actions">
+            {!adding && (
+              <button
+                className="btn-ghost"
+                onClick={() => { setAdding(true); setSelected(new Set()) }}
+              >
+                <Plus size={16} /> Aufgaben hinzufügen
+              </button>
+            )}
+            <button className="btn-ghost" onClick={finishSprint}>Trail beenden</button>
+          </div>
         </header>
 
         {remaining < 0 && (
@@ -284,6 +327,49 @@ export default function SprintPage() {
 
         {tasks.length === 0 && (
           <div className="empty-state">Dieser Trail hat keine Aufgaben.</div>
+        )}
+
+        {adding && (
+          <>
+            <div className="card prominent">
+              <h3><Plus size={16} /> Aufgaben zum Trail hinzufügen</h3>
+              <p className="muted">
+                Wähle weitere Schritte aus deinen Zielen — sie werden dem laufenden Trail
+                hinzugefügt.
+              </p>
+            </div>
+
+            {goalTrees.map(({ goal, roots }) => {
+              const pickable = roots.some((r) => !r.is_done)
+              return (
+                <div className="card" key={goal.id}>
+                  <h3><TreePine size={16} /> {goal.title}</h3>
+                  {pickable ? (
+                    <ul className="list-plain">{roots.map(renderPickerNode)}</ul>
+                  ) : (
+                    <p className="faint">
+                      Keine offenen Schritte — <Link to={`/ziele/${goal.id}`}>Schritte anlegen</Link>
+                    </p>
+                  )}
+                </div>
+              )
+            })}
+
+            {goalTrees.length === 0 && (
+              <div className="empty-state">
+                Du hast noch keine aktiven Ziele. <Link to="/ziele">Lege zuerst ein Ziel an.</Link>
+              </div>
+            )}
+
+            <div className="form-actions">
+              <button className="btn-ghost" onClick={() => { setAdding(false); setSelected(new Set()) }}>
+                Abbrechen
+              </button>
+              <button className="btn-primary" onClick={addTasksToSprint} disabled={selected.size === 0}>
+                Hinzufügen ({selected.size} Aufgabe{selected.size === 1 ? '' : 'n'})
+              </button>
+            </div>
+          </>
         )}
 
         <p className="faint">
