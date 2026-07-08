@@ -26,18 +26,14 @@ import {
   pathToStep,
   stepNeedsClarification,
 } from '../lib/tree'
-import {
-  buildDepsByStep,
-  formatSchedule,
-  scheduleState,
-  unmetDependencies,
-  wouldCreateCycle,
-} from '../lib/availability'
+import { buildDepsByStep, wouldCreateCycle } from '../lib/availability'
 import { formatDate, todayStr } from '../lib/dates'
 import { recordActivity, badgeToastText, checkStepCompletionBadges } from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import CheckButton from '../components/CheckButton.jsx'
+import RowMenu from '../components/RowMenu.jsx'
+import StepBadges from '../components/StepBadges.jsx'
 
 export default function GoalDetailPage() {
   const { goalId } = useParams()
@@ -275,9 +271,6 @@ export default function GoalDetailPage() {
   function renderNode(node, siblings) {
     const isCollapsed = collapsed.has(node.id)
     const clarify = stepNeedsClarification(node)
-    // Zeit-/Abhängigkeits-Hinweise: rein informativ, kein Blocker fürs Abhaken
-    const schedState = node.is_done ? 'none' : scheduleState(node, availabilityCtx.now)
-    const waiting = node.is_done ? [] : unmetDependencies(node, availabilityCtx)
     const depIds = depsByStep.get(node.id) ?? []
 
     return (
@@ -322,68 +315,44 @@ export default function GoalDetailPage() {
               />
             </form>
           ) : (
-            <span
-              className={`step-title${node.is_done ? ' done-text' : ''}`}
-              onClick={() => node.children.length > 0 && setFocusStepId(node.id)}
-              style={{ cursor: node.children.length > 0 ? 'pointer' : 'default' }}
-              title={node.children.length > 0 ? 'In diesen Ast hineinzoomen' : undefined}
-            >
-              {node.title}
-            </span>
+            <div className="row-main">
+              <span
+                className={`step-title${node.is_done ? ' done-text' : ''}`}
+                onClick={() => node.children.length > 0 && setFocusStepId(node.id)}
+                style={{ cursor: node.children.length > 0 ? 'pointer' : 'default' }}
+                title={node.children.length > 0 ? 'In diesen Ast hineinzoomen' : undefined}
+              >
+                {node.title}
+              </span>
+              <StepBadges step={node} ctx={availabilityCtx} />
+            </div>
           )}
 
           {clarify && <span className="chip clarify"><TriangleAlert /> Klärung</span>}
 
-          {node.scheduled_date && !node.is_done && (
-            <span
-              className={`chip${schedState === 'missed' ? ' missed' : ''}`}
-              title={
-                schedState === 'missed'
-                  ? 'Termin verstrichen — kein Blocker, nur ein Hinweis'
-                  : 'Wird nur im Vorlauffenster als nächster Schritt vorgeschlagen'
-              }
-            >
-              <CalendarClock />
-              {schedState === 'missed' && 'verpasst · '}
-              {formatSchedule(node)}
-            </span>
-          )}
-
-          {waiting.length > 0 && (
-            <span
-              className="chip wait"
-              title={`Wartet auf: ${waiting.map((w) => w.title).join(', ')}`}
-            >
-              <Link2 /> wartet auf{' '}
-              {waiting.length === 1 ? waiting[0].title : `${waiting.length} Schritte`}
-            </span>
-          )}
-
-          <span className="row-actions">
-            <button className="icon-btn" title="Unterschritt hinzufügen"
-              onClick={() => { setAddTargetId(node.id); setAddText('') }}>
-              <Plus size={15} />
-            </button>
-            <button className="icon-btn" title="Umbenennen"
-              onClick={() => { setEditingId(node.id); setEditText(node.title) }}>
-              <Pencil size={14} />
-            </button>
-            <button className="icon-btn" title="Termin & Abhängigkeiten"
-              onClick={() => openDetails(node)}>
-              <CalendarClock size={14} />
-            </button>
-            <button className="icon-btn" title="Nach oben"
-              onClick={() => moveStep(node, siblings, -1)}>
-              <ArrowUp size={14} />
-            </button>
-            <button className="icon-btn" title="Nach unten"
-              onClick={() => moveStep(node, siblings, 1)}>
-              <ArrowDown size={14} />
-            </button>
-            <button className="icon-btn" title="Löschen" onClick={() => deleteStep(node)}>
-              <Trash2 size={14} />
-            </button>
-          </span>
+          <RowMenu
+            label="Schritt-Aktionen"
+            actions={[
+              {
+                icon: Plus,
+                label: 'Unterschritt hinzufügen',
+                onClick: () => { setAddTargetId(node.id); setAddText('') },
+              },
+              {
+                icon: Pencil,
+                label: 'Umbenennen',
+                onClick: () => { setEditingId(node.id); setEditText(node.title) },
+              },
+              {
+                icon: CalendarClock,
+                label: 'Termin & Abhängigkeiten',
+                onClick: () => openDetails(node),
+              },
+              { icon: ArrowUp, label: 'Nach oben', onClick: () => moveStep(node, siblings, -1) },
+              { icon: ArrowDown, label: 'Nach unten', onClick: () => moveStep(node, siblings, 1) },
+              { icon: Trash2, label: 'Löschen', onClick: () => deleteStep(node), danger: true },
+            ]}
+          />
         </div>
 
         {addTargetId === node.id && (

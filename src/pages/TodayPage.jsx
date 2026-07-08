@@ -5,7 +5,6 @@ import { supabase } from '../lib/supabaseClient'
 import { buildTree, goalNeedsClarification, pathToStep } from '../lib/tree'
 import {
   blockReason,
-  blockReasonText,
   buildDepsByStep,
   collectBlockedLeaves,
   firstAvailableLeaf,
@@ -23,6 +22,8 @@ import {
 import { useToast } from '../context/ToastContext.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import CheckButton from '../components/CheckButton.jsx'
+import RowMenu from '../components/RowMenu.jsx'
+import StepBadges from '../components/StepBadges.jsx'
 
 export default function TodayPage() {
   const showToast = useToast()
@@ -326,29 +327,29 @@ export default function TodayPage() {
             {focusTasks.map((task) => {
               const step = stepById.get(task.step_id)
               if (!step) return null
-              // Blockiert (Zeitfenster oder Abhängigkeit): dezent gegraut
-              // mit kleinem Hinweis — sichtbar anders als sofort Machbares
+              // Blockiert (Zeitfenster oder Abhängigkeit): dezent gegraut,
+              // Details stecken in den kompakten Badges unter dem Titel
               const reason = step.is_done ? null : blockReason(step, availabilityCtx)
               return (
                 <li className="tree-node" key={task.id}>
                   <div className={`tree-row${reason ? ' blocked-row' : ''}`}>
                     <CheckButton done={step.is_done} onToggle={() => toggleStepDone(step)} />
-                    <span className={`step-title${step.is_done ? ' done-text' : ''}`}>
-                      {step.title}
-                      {reason && (
-                        <span className="blocked-note">
-                          {reason.type === 'dependency' ? <Link2 size={11} /> : <Clock size={11} />}{' '}
-                          {blockReasonText(reason, step)}
-                        </span>
-                      )}
-                    </span>
-                    <button
-                      className="icon-btn"
-                      title="Aus der Tagesauswahl entfernen (bleibt im Sprint)"
-                      onClick={() => removeFocus(task)}
-                    >
-                      <X size={15} />
-                    </button>
+                    <div className="row-main">
+                      <span className={`step-title${step.is_done ? ' done-text' : ''}`}>
+                        {step.title}
+                      </span>
+                      <StepBadges step={step} ctx={availabilityCtx} />
+                    </div>
+                    <RowMenu
+                      label="Aufgaben-Aktionen"
+                      actions={[
+                        {
+                          icon: X,
+                          label: 'Aus der Tagesauswahl entfernen',
+                          onClick: () => removeFocus(task),
+                        },
+                      ]}
+                    />
                   </div>
                 </li>
               )

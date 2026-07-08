@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Compass, TreePine, Tent, Star, Check, Hourglass, Plus } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { buildTree, pathToStep } from '../lib/tree'
+import { buildDepsByStep } from '../lib/availability'
 import { addDays, daysUntil, formatDate, todayStr } from '../lib/dates'
 import {
   awardBadge,
@@ -14,6 +15,7 @@ import {
 import { useToast } from '../context/ToastContext.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import CheckButton from '../components/CheckButton.jsx'
+import StepBadges from '../components/StepBadges.jsx'
 
 export default function SprintPage() {
   const showToast = useToast()
@@ -23,6 +25,7 @@ export default function SprintPage() {
   const [tasks, setTasks] = useState([])
   const [goals, setGoals] = useState([])
   const [steps, setSteps] = useState([])
+  const [dependencies, setDependencies] = useState([])
 
   // Planungs-UI (auch für Nachplanung im aktiven Trail)
   const [planning, setPlanning] = useState(false)
@@ -31,16 +34,19 @@ export default function SprintPage() {
   const [justFinished, setJustFinished] = useState(null)
 
   async function load() {
-    const [{ data: sprintRows }, { data: goalRows }, { data: stepRows }] = await Promise.all([
-      supabase.from('sprints').select('*').order('start_date', { ascending: false }),
-      supabase.from('goals').select('*'),
-      supabase.from('steps').select('*'),
-    ])
+    const [{ data: sprintRows }, { data: goalRows }, { data: stepRows }, { data: depRows }] =
+      await Promise.all([
+        supabase.from('sprints').select('*').order('start_date', { ascending: false }),
+        supabase.from('goals').select('*'),
+        supabase.from('steps').select('*'),
+        supabase.from('step_dependencies').select('*'),
+      ])
     const active = (sprintRows ?? []).find((s) => s.status === 'active') ?? null
     setActiveSprint(active)
     setLastSprint((sprintRows ?? []).find((s) => s.status === 'completed') ?? null)
     setGoals(goalRows ?? [])
     setSteps(stepRows ?? [])
+    setDependencies(depRows ?? [])
     if (active) {
       const { data: taskRows } = await supabase
         .from('sprint_tasks')
@@ -60,6 +66,11 @@ export default function SprintPage() {
 
   const stepById = useMemo(() => new Map(steps.map((s) => [s.id, s])), [steps])
   const goalById = useMemo(() => new Map(goals.map((g) => [g.id, g])), [goals])
+  const depsByStep = useMemo(() => buildDepsByStep(dependencies), [dependencies])
+  const availabilityCtx = useMemo(
+    () => ({ depsByStep, stepById, now: new Date() }),
+    [depsByStep, stepById]
+  )
 
   // Baum pro aktivem Ziel für die Planung
   const goalTrees = useMemo(() => {
@@ -311,14 +322,17 @@ export default function SprintPage() {
                         done={info.step.is_done}
                         onToggle={() => toggleTaskDone(task)}
                       />
-                      <span className={`step-title${info.step.is_done ? ' done-text' : ''}`}>
-                        {info.step.title}
-                        {info.parentPath && (
-                          <span className="faint" style={{ display: 'block' }}>
-                            {info.parentPath}
-                          </span>
-                        )}
-                      </span>
+                      <div className="row-main">
+                        <span className={`step-title${info.step.is_done ? ' done-text' : ''}`}>
+                          {info.step.title}
+                          {info.parentPath && (
+                            <span className="faint" style={{ display: 'block' }}>
+                              {info.parentPath}
+                            </span>
+                          )}
+                        </span>
+                        <StepBadges step={info.step} ctx={availabilityCtx} />
+                      </div>
                       <button
                         className="icon-btn"
                         title={focusedToday ? 'Aus dem Heute-Fokus entfernen' : 'Heute in den Fokus nehmen'}
