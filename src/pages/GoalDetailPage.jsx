@@ -34,7 +34,7 @@ import {
   wouldCreateCycle,
 } from '../lib/availability'
 import { formatDate, todayStr } from '../lib/dates'
-import { recordActivity, badgeToastText } from '../lib/gamification'
+import { recordActivity, badgeToastText, checkStepCompletionBadges } from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import CheckButton from '../components/CheckButton.jsx'
@@ -112,7 +112,10 @@ export default function GoalDetailPage() {
       .eq('id', node.id)
     await load()
     if (nowDone) {
-      const newBadges = await recordActivity()
+      const newBadges = [
+        ...(await recordActivity()),
+        ...(await checkStepCompletionBadges()),
+      ]
       newBadges.forEach((k) => showToast(badgeToastText(k)))
     }
   }

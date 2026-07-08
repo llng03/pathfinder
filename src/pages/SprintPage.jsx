@@ -4,7 +4,13 @@ import { Compass, TreePine, Tent, Star, Check, Hourglass, Plus } from 'lucide-re
 import { supabase } from '../lib/supabaseClient'
 import { buildTree, pathToStep } from '../lib/tree'
 import { addDays, daysUntil, formatDate, todayStr } from '../lib/dates'
-import { awardBadge, badgeToastText, recordActivity } from '../lib/gamification'
+import {
+  awardBadge,
+  badgeToastText,
+  checkStepCompletionBadges,
+  checkTrailBadges,
+  recordActivity,
+} from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import CheckButton from '../components/CheckButton.jsx'
@@ -91,7 +97,10 @@ export default function SprintPage() {
       .eq('id', step.id)
     await load()
     if (nowDone) {
-      const newBadges = await recordActivity()
+      const newBadges = [
+        ...(await recordActivity()),
+        ...(await checkStepCompletionBadges()),
+      ]
       newBadges.forEach((k) => showToast(badgeToastText(k)))
     }
   }
@@ -128,6 +137,7 @@ export default function SprintPage() {
     const newBadges = []
     newBadges.push(await awardBadge('first_sprint_completed'))
     if (total > 0 && doneCount === total) newBadges.push(await awardBadge('perfect_sprint'))
+    newBadges.push(...(await checkTrailBadges()))
     newBadges.push(...(await recordActivity()))
     newBadges.filter(Boolean).forEach((k) => showToast(badgeToastText(k)))
 

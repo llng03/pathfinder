@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Lightbulb, Sprout, Leaf, Undo2, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
-import { recordActivity, awardBadge, badgeToastText } from '../lib/gamification'
+import { recordActivity, awardBadge, badgeToastText, checkIdeaBadges } from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
 
 export default function IdeasPage() {
@@ -41,7 +41,7 @@ export default function IdeasPage() {
     setTitle('')
     setNote('')
     await load()
-    const newBadges = await recordActivity()
+    const newBadges = [...(await recordActivity()), ...(await checkIdeaBadges())]
     newBadges.forEach((k) => showToast(badgeToastText(k)))
   }
 

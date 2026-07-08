@@ -14,7 +14,12 @@ import {
 } from '../lib/availability'
 import { formatDate, todayStr } from '../lib/dates'
 import { currentStreak, missedTwice } from '../lib/streaks'
-import { awardBadge, badgeToastText, recordActivity } from '../lib/gamification'
+import {
+  badgeToastText,
+  checkStepCompletionBadges,
+  habitStreakBadges,
+  recordActivity,
+} from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
 import ProgressBar from '../components/ProgressBar.jsx'
 import CheckButton from '../components/CheckButton.jsx'
@@ -157,7 +162,10 @@ export default function TodayPage() {
       .eq('id', step.id)
     await load()
     if (nowDone) {
-      const newBadges = await recordActivity()
+      const newBadges = [
+        ...(await recordActivity()),
+        ...(await checkStepCompletionBadges()),
+      ]
       newBadges.forEach((k) => showToast(badgeToastText(k)))
     }
   }
@@ -183,7 +191,7 @@ export default function TodayPage() {
         logsAfter.filter((l) => l.habit_id === habit.id).map((l) => l.log_date)
       )
       const newBadges = []
-      if (streak >= 14) newBadges.push(await awardBadge('habit_streak_14'))
+      newBadges.push(...(await habitStreakBadges(streak)))
       newBadges.push(...(await recordActivity()))
       newBadges.filter(Boolean).forEach((k) => showToast(badgeToastText(k)))
     }

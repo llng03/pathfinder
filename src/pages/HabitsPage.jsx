@@ -3,7 +3,7 @@ import { Repeat, Plus, Flame, Moon, Archive, Undo2, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { addDays, todayStr, weekdayShort } from '../lib/dates'
 import { currentStreak, missedTwice } from '../lib/streaks'
-import { awardBadge, badgeToastText, recordActivity } from '../lib/gamification'
+import { awardBadge, badgeToastText, habitStreakBadges, recordActivity } from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
 import CheckButton from '../components/CheckButton.jsx'
 
@@ -90,7 +90,7 @@ export default function HabitsPage() {
       ]
       const streak = currentStreak(datesAfter)
       const newBadges = []
-      if (streak >= 14) newBadges.push(await awardBadge('habit_streak_14'))
+      newBadges.push(...(await habitStreakBadges(streak)))
       newBadges.push(...(await recordActivity()))
       newBadges.filter(Boolean).forEach((k) => showToast(badgeToastText(k)))
     }
