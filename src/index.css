@@ -378,6 +378,93 @@ label { font-size: 0.82rem; color: var(--text-dim); display: block; margin-botto
   background: rgba(255, 196, 102, 0.08);
 }
 
+/* Zeitbindung: verstrichener Termin — dezenter Hinweis, kein Alarm */
+.chip.missed {
+  border-color: rgba(217, 128, 114, 0.45);
+  color: var(--danger);
+  background: rgba(217, 128, 114, 0.08);
+}
+
+/* Abhängigkeit noch offen — wartet, aber kein Klärungsfall */
+.chip.wait {
+  color: var(--text-faint);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---------- Blockierte Aufgaben (Zeitfenster / Abhängigkeit) ---------- */
+
+.blocked-row .check,
+.blocked-row .step-title {
+  opacity: 0.55;
+}
+
+.blocked-note {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-faint);
+  opacity: 1;
+}
+
+.blocked-list li {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  padding: 0.3rem 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+.blocked-list li svg.lucide {
+  margin-top: 3px;
+  color: var(--text-faint);
+}
+
+/* ---------- Panel: Termin & Abhängigkeiten eines Schritts ---------- */
+
+.step-details {
+  margin: 0.4rem 0 0.6rem 2.6rem;
+  padding: 0.75rem 0.9rem;
+  background: var(--forest-900);
+  border: 1px solid var(--forest-700);
+  border-radius: var(--radius-sm);
+}
+.step-details > .faint { margin: 0.5rem 0 0.35rem; }
+.step-details > .faint:first-child { margin-top: 0; }
+
+.details-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+.details-grid label { margin-bottom: 0; }
+.details-grid input { width: auto; max-width: 150px; }
+
+.dep-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.dep-results {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
+  border: 1px solid var(--forest-700);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.dep-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--forest-850);
+  border-radius: 0;
+}
+.dep-results button:hover { background: var(--forest-700); }
+
 /* ---------- Baum (Steps) ---------- */
 
 .tree-children {

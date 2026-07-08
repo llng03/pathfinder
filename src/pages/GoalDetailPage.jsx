@@ -5,6 +5,8 @@ import {
   Mountain,
   TriangleAlert,
   CalendarDays,
+  CalendarClock,
+  Link2,
   Compass,
   ChevronRight,
   ChevronDown,
@@ -24,6 +26,13 @@ import {
   pathToStep,
   stepNeedsClarification,
 } from '../lib/tree'
+import {
+  buildDepsByStep,
+  formatSchedule,
+  scheduleState,
+  unmetDependencies,
+  wouldCreateCycle,
+} from '../lib/availability'
 import { formatDate, todayStr } from '../lib/dates'
 import { recordActivity, badgeToastText } from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
@@ -37,6 +46,10 @@ export default function GoalDetailPage() {
 
   const [goal, setGoal] = useState(null)
   const [steps, setSteps] = useState([])
+  // Ziel-übergreifend, für Abhängigkeiten aus anderen Zielen
+  const [allSteps, setAllSteps] = useState([])
+  const [allGoals, setAllGoals] = useState([])
+  const [dependencies, setDependencies] = useState([])
   const [loading, setLoading] = useState(true)
 
   // UI-Zustand
@@ -46,14 +59,25 @@ export default function GoalDetailPage() {
   const [editText, setEditText] = useState('')
   const [addTargetId, setAddTargetId] = useState(undefined) // undefined = kein Formular, null = Root
   const [addText, setAddText] = useState('')
+  const [detailsId, setDetailsId] = useState(null) // Panel: Zeit & Abhängigkeiten
+  const [schedDate, setSchedDate] = useState('')
+  const [schedTime, setSchedTime] = useState('')
+  const [leadMinutes, setLeadMinutes] = useState(120)
+  const [depQuery, setDepQuery] = useState('')
 
   async function load() {
-    const [{ data: goalRow }, { data: stepRows }] = await Promise.all([
-      supabase.from('goals').select('*').eq('id', goalId).single(),
-      supabase.from('steps').select('*').eq('goal_id', goalId),
-    ])
+    const [{ data: goalRow }, { data: stepRows }, { data: goalRows }, { data: depRows }] =
+      await Promise.all([
+        supabase.from('goals').select('*').eq('id', goalId).single(),
+        supabase.from('steps').select('*'),
+        supabase.from('goals').select('id, title'),
+        supabase.from('step_dependencies').select('*'),
+      ])
     setGoal(goalRow ?? null)
-    setSteps(stepRows ?? [])
+    setAllSteps(stepRows ?? [])
+    setSteps((stepRows ?? []).filter((s) => s.goal_id === goalId))
+    setAllGoals(goalRows ?? [])
+    setDependencies(depRows ?? [])
     setLoading(false)
   }
 
@@ -64,6 +88,13 @@ export default function GoalDetailPage() {
   }, [goalId])
 
   const { roots, byId } = useMemo(() => buildTree(steps), [steps])
+  const allStepById = useMemo(() => new Map(allSteps.map((s) => [s.id, s])), [allSteps])
+  const goalTitleById = useMemo(() => new Map(allGoals.map((g) => [g.id, g.title])), [allGoals])
+  const depsByStep = useMemo(() => buildDepsByStep(dependencies), [dependencies])
+  const availabilityCtx = useMemo(
+    () => ({ depsByStep, stepById: allStepById, now: new Date() }),
+    [depsByStep, allStepById]
+  )
   const focusNode = focusStepId ? byId.get(focusStepId) : null
   const visibleNodes = focusNode ? focusNode.children : roots
   const breadcrumbPath = focusNode ? pathToStep(byId, focusNode.id) : []
@@ -135,6 +166,78 @@ export default function GoalDetailPage() {
     await load()
   }
 
+  // ---------- Zeitbindung & Abhängigkeiten ----------
+
+  function openDetails(node) {
+    if (detailsId === node.id) {
+      setDetailsId(null)
+      return
+    }
+    setDetailsId(node.id)
+    setSchedDate(node.scheduled_date ?? '')
+    setSchedTime(node.scheduled_time?.slice(0, 5) ?? '')
+    setLeadMinutes(node.lead_time_minutes ?? 120)
+    setDepQuery('')
+  }
+
+  async function saveSchedule(e, node) {
+    e.preventDefault()
+    if (schedTime && !schedDate) {
+      showToast('Bitte auch ein Datum wählen')
+      return
+    }
+    const { error } = await supabase
+      .from('steps')
+      .update({
+        scheduled_date: schedDate || null,
+        scheduled_time: schedDate && schedTime ? schedTime : null,
+        lead_time_minutes: leadMinutes === '' ? 120 : Number(leadMinutes),
+      })
+      .eq('id', node.id)
+    if (error) {
+      showToast('Zeitbindung konnte nicht gespeichert werden')
+      return
+    }
+    await load()
+  }
+
+  async function clearSchedule(node) {
+    await supabase
+      .from('steps')
+      .update({ scheduled_date: null, scheduled_time: null })
+      .eq('id', node.id)
+    setSchedDate('')
+    setSchedTime('')
+    await load()
+  }
+
+  async function addDependency(node, target) {
+    if (wouldCreateCycle(node.id, target.id, depsByStep)) {
+      showToast(
+        `Nicht möglich: „${target.title}" hängt selbst (direkt oder indirekt) von „${node.title}" ab — das ergäbe einen Kreis.`
+      )
+      return
+    }
+    const { error } = await supabase
+      .from('step_dependencies')
+      .insert({ step_id: node.id, depends_on_step_id: target.id })
+    if (error) {
+      showToast('Abhängigkeit konnte nicht angelegt werden')
+      return
+    }
+    setDepQuery('')
+    await load()
+  }
+
+  async function removeDependency(node, dependsOnId) {
+    await supabase
+      .from('step_dependencies')
+      .delete()
+      .eq('step_id', node.id)
+      .eq('depends_on_step_id', dependsOnId)
+    await load()
+  }
+
   async function moveStep(node, siblings, direction) {
     const index = siblings.findIndex((s) => s.id === node.id)
     const swapWith = siblings[index + direction]
@@ -169,6 +272,10 @@ export default function GoalDetailPage() {
   function renderNode(node, siblings) {
     const isCollapsed = collapsed.has(node.id)
     const clarify = stepNeedsClarification(node)
+    // Zeit-/Abhängigkeits-Hinweise: rein informativ, kein Blocker fürs Abhaken
+    const schedState = node.is_done ? 'none' : scheduleState(node, availabilityCtx.now)
+    const waiting = node.is_done ? [] : unmetDependencies(node, availabilityCtx)
+    const depIds = depsByStep.get(node.id) ?? []
 
     return (
       <li className="tree-node" key={node.id}>
@@ -224,6 +331,31 @@ export default function GoalDetailPage() {
 
           {clarify && <span className="chip clarify"><TriangleAlert /> Klärung</span>}
 
+          {node.scheduled_date && !node.is_done && (
+            <span
+              className={`chip${schedState === 'missed' ? ' missed' : ''}`}
+              title={
+                schedState === 'missed'
+                  ? 'Termin verstrichen — kein Blocker, nur ein Hinweis'
+                  : 'Wird nur im Vorlauffenster als nächster Schritt vorgeschlagen'
+              }
+            >
+              <CalendarClock />
+              {schedState === 'missed' && 'verpasst · '}
+              {formatSchedule(node)}
+            </span>
+          )}
+
+          {waiting.length > 0 && (
+            <span
+              className="chip wait"
+              title={`Wartet auf: ${waiting.map((w) => w.title).join(', ')}`}
+            >
+              <Link2 /> wartet auf{' '}
+              {waiting.length === 1 ? waiting[0].title : `${waiting.length} Schritte`}
+            </span>
+          )}
+
           <span className="row-actions">
             <button className="icon-btn" title="Unterschritt hinzufügen"
               onClick={() => { setAddTargetId(node.id); setAddText('') }}>
@@ -232,6 +364,10 @@ export default function GoalDetailPage() {
             <button className="icon-btn" title="Umbenennen"
               onClick={() => { setEditingId(node.id); setEditText(node.title) }}>
               <Pencil size={14} />
+            </button>
+            <button className="icon-btn" title="Termin & Abhängigkeiten"
+              onClick={() => openDetails(node)}>
+              <CalendarClock size={14} />
             </button>
             <button className="icon-btn" title="Nach oben"
               onClick={() => moveStep(node, siblings, -1)}>
@@ -260,6 +396,87 @@ export default function GoalDetailPage() {
               <X size={14} />
             </button>
           </form>
+        )}
+
+        {detailsId === node.id && (
+          <div className="step-details">
+            <p className="faint"><CalendarClock size={13} /> Zeitbindung</p>
+            <form className="details-grid" onSubmit={(e) => saveSchedule(e, node)}>
+              <label>
+                Datum
+                <input type="date" value={schedDate}
+                  onChange={(e) => setSchedDate(e.target.value)} />
+              </label>
+              <label>
+                Uhrzeit
+                <input type="time" value={schedTime}
+                  onChange={(e) => setSchedTime(e.target.value)} />
+              </label>
+              <label>
+                Vorlauf (Min.)
+                <input type="number" min="0" step="5" value={leadMinutes}
+                  onChange={(e) => setLeadMinutes(e.target.value)} />
+              </label>
+              <button type="submit" className="btn-primary btn-sm">Speichern</button>
+              {node.scheduled_date && (
+                <button type="button" className="btn-ghost btn-sm"
+                  onClick={() => clearSchedule(node)}>
+                  Zeit entfernen
+                </button>
+              )}
+            </form>
+
+            <p className="faint">
+              <Link2 size={13} /> Voraussetzungen — müssen vorher erledigt sein
+            </p>
+            {depIds.length > 0 && (
+              <div className="dep-chips">
+                {depIds.map((depId) => {
+                  const dep = allStepById.get(depId)
+                  if (!dep) return null
+                  const foreignGoal =
+                    dep.goal_id !== goalId ? goalTitleById.get(dep.goal_id) : null
+                  return (
+                    <span key={depId} className="chip">
+                      <span className={dep.is_done ? 'done-text' : ''}>{dep.title}</span>
+                      {foreignGoal && <span className="faint">· {foreignGoal}</span>}
+                      <button className="icon-btn" style={{ padding: '0 2px' }}
+                        title="Abhängigkeit entfernen"
+                        onClick={() => removeDependency(node, depId)}>
+                        <X size={12} />
+                      </button>
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+            <input
+              value={depQuery}
+              onChange={(e) => setDepQuery(e.target.value)}
+              placeholder="Schritt suchen — auch aus anderen Zielen …"
+            />
+            {depQuery.trim() && (
+              <ul className="dep-results">
+                {allSteps
+                  .filter(
+                    (s) =>
+                      s.id !== node.id &&
+                      !depIds.includes(s.id) &&
+                      s.title.toLowerCase().includes(depQuery.trim().toLowerCase())
+                  )
+                  .slice(0, 8)
+                  .map((s) => (
+                    <li key={s.id}>
+                      <button type="button" onClick={() => addDependency(node, s)}>
+                        {s.title}
+                        <span className="faint"> · {goalTitleById.get(s.goal_id)}</span>
+                        {s.is_done && <span className="faint"> · erledigt</span>}
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </div>
         )}
 
         {!isCollapsed && node.children.length > 0 && (

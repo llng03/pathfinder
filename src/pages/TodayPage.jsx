@@ -1,8 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Sun, Flame, Moon, Sparkles, Compass, TreePine, X } from 'lucide-react'
+import { Sun, Flame, Moon, Sparkles, Compass, TreePine, X, Clock, Link2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
-import { buildTree, firstOpenLeaf, goalNeedsClarification, pathToStep } from '../lib/tree'
+import { buildTree, goalNeedsClarification, pathToStep } from '../lib/tree'
+import {
+  blockReason,
+  blockReasonText,
+  buildDepsByStep,
+  collectBlockedLeaves,
+  firstAvailableLeaf,
+  formatSchedule,
+  scheduledAt,
+} from '../lib/availability'
 import { formatDate, todayStr } from '../lib/dates'
 import { currentStreak, missedTwice } from '../lib/streaks'
 import { awardBadge, badgeToastText, recordActivity } from '../lib/gamification'
@@ -17,6 +26,7 @@ export default function TodayPage() {
   const [tasks, setTasks] = useState([])
   const [goals, setGoals] = useState([])
   const [steps, setSteps] = useState([])
+  const [dependencies, setDependencies] = useState([])
   const [habits, setHabits] = useState([])
   const [habitLogs, setHabitLogs] = useState([])
   const [activityDates, setActivityDates] = useState([])
@@ -28,6 +38,7 @@ export default function TodayPage() {
       { data: sprintRows },
       { data: goalRows },
       { data: stepRows },
+      { data: depRows },
       { data: habitRows },
       { data: logRows },
       { data: activityRows },
@@ -35,6 +46,7 @@ export default function TodayPage() {
       supabase.from('sprints').select('*').eq('status', 'active').limit(1),
       supabase.from('goals').select('*').order('created_at'),
       supabase.from('steps').select('*'),
+      supabase.from('step_dependencies').select('*'),
       supabase.from('habits').select('*').is('archived_at', null).order('created_at'),
       supabase.from('habit_logs').select('*'),
       supabase.from('activity_days').select('activity_date'),
@@ -43,6 +55,7 @@ export default function TodayPage() {
     setSprint(active)
     setGoals(goalRows ?? [])
     setSteps(stepRows ?? [])
+    setDependencies(depRows ?? [])
     setHabits(habitRows ?? [])
     setHabitLogs(logRows ?? [])
     setActivityDates((activityRows ?? []).map((r) => r.activity_date))
@@ -80,9 +93,17 @@ export default function TodayPage() {
   )
   const activityStreak = currentStreak(activityDates)
 
-  // "Nächster Schritt": erster offener Blatt-Schritt —
-  // bevorzugt aus den Fokusaufgaben, dann aus dem Sprint, sonst aus allen Zielen
-  const nextStep = useMemo(() => {
+  const depsByStep = useMemo(() => buildDepsByStep(dependencies), [dependencies])
+  const availabilityCtx = useMemo(
+    () => ({ depsByStep, stepById, now: new Date() }),
+    [depsByStep, stepById]
+  )
+
+  // "Nächster Schritt": erster offener Blatt-Schritt, der JETZT machbar ist
+  // (Zeitfenster + Abhängigkeiten) — bevorzugt aus den Fokusaufgaben, dann
+  // aus dem Sprint, sonst aus allen Zielen. Ist alles blockiert, wird
+  // stattdessen der Grund gesammelt (blockedLeaves).
+  const { nextStep, blockedLeaves } = useMemo(() => {
     const fromTasks = (taskList) => {
       for (const task of taskList) {
         const step = stepById.get(task.step_id)
@@ -90,7 +111,7 @@ export default function TodayPage() {
         const tree = treesByGoal.get(step.goal_id)
         const node = tree?.byId.get(step.id)
         if (!node) continue
-        const leaf = firstOpenLeaf([node])
+        const leaf = firstAvailableLeaf([node], availabilityCtx)
         if (leaf) return leaf
       }
       return null
@@ -98,16 +119,33 @@ export default function TodayPage() {
     let leaf = fromTasks(focusTasks) ?? fromTasks(tasks)
     if (!leaf) {
       for (const goal of activeGoals) {
-        leaf = firstOpenLeaf(treesByGoal.get(goal.id)?.roots ?? [])
+        leaf = firstAvailableLeaf(treesByGoal.get(goal.id)?.roots ?? [], availabilityCtx)
         if (leaf) break
       }
     }
-    if (!leaf) return null
-    const tree = treesByGoal.get(leaf.goal_id)
-    const goal = goals.find((g) => g.id === leaf.goal_id)
-    const parents = tree ? pathToStep(tree.byId, leaf.id).slice(0, -1).map((p) => p.title) : []
-    return { leaf, goal, parents }
-  }, [focusTasks, tasks, activeGoals, treesByGoal, stepById, goals])
+    if (leaf) {
+      const tree = treesByGoal.get(leaf.goal_id)
+      const goal = goals.find((g) => g.id === leaf.goal_id)
+      const parents = tree ? pathToStep(tree.byId, leaf.id).slice(0, -1).map((p) => p.title) : []
+      return { nextStep: { leaf, goal, parents }, blockedLeaves: [] }
+    }
+    const blocked = []
+    for (const goal of activeGoals) {
+      collectBlockedLeaves(treesByGoal.get(goal.id)?.roots ?? [], availabilityCtx, blocked)
+    }
+    return { nextStep: null, blockedLeaves: blocked }
+  }, [focusTasks, tasks, activeGoals, treesByGoal, stepById, goals, availabilityCtx])
+
+  // Für den "alles blockiert"-Hinweis: nächster anstehender Termin +
+  // Schritte, die auf Voraussetzungen warten
+  const nextAppointment = useMemo(() => {
+    const upcoming = blockedLeaves.filter(
+      (b) => b.reason.type === 'time' && b.reason.state === 'early'
+    )
+    upcoming.sort((a, b) => scheduledAt(a.step) - scheduledAt(b.step))
+    return upcoming[0] ?? null
+  }, [blockedLeaves])
+  const waitingLeaves = blockedLeaves.filter((b) => b.reason.type === 'dependency').slice(0, 3)
 
   // ---------- Aktionen ----------
 
@@ -209,6 +247,38 @@ export default function TodayPage() {
         </div>
       )}
 
+      {/* Alles blockiert: freundlicher Hinweis mit Grund statt leerer Karte */}
+      {!nextStep && blockedLeaves.length > 0 && (
+        <div className="card">
+          <p className="faint" style={{ marginBottom: '0.35rem' }}>
+            <Sparkles size={13} /> Dein nächster Schritt
+          </p>
+          <p className="muted">
+            Gerade ist nichts sofort dran — deine nächsten Schritte warten noch auf ihren Moment:
+          </p>
+          <ul className="list-plain blocked-list">
+            {nextAppointment && (
+              <li>
+                <Clock size={14} />
+                <span>
+                  Nächster Termin: {formatSchedule(nextAppointment.step)} –{' '}
+                  {nextAppointment.step.title}
+                </span>
+              </li>
+            )}
+            {waitingLeaves.map(({ step, reason }) => (
+              <li key={step.id}>
+                <Link2 size={14} />
+                <span>
+                  „{step.title}" wartet auf:{' '}
+                  {reason.waitingOn.map((s) => s.title).join(', ')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* Braucht Klärung */}
       {clarifyGoals.length > 0 && (
         <div className="hint">
@@ -248,12 +318,21 @@ export default function TodayPage() {
             {focusTasks.map((task) => {
               const step = stepById.get(task.step_id)
               if (!step) return null
+              // Blockiert (Zeitfenster oder Abhängigkeit): dezent gegraut
+              // mit kleinem Hinweis — sichtbar anders als sofort Machbares
+              const reason = step.is_done ? null : blockReason(step, availabilityCtx)
               return (
                 <li className="tree-node" key={task.id}>
-                  <div className="tree-row">
+                  <div className={`tree-row${reason ? ' blocked-row' : ''}`}>
                     <CheckButton done={step.is_done} onToggle={() => toggleStepDone(step)} />
                     <span className={`step-title${step.is_done ? ' done-text' : ''}`}>
                       {step.title}
+                      {reason && (
+                        <span className="blocked-note">
+                          {reason.type === 'dependency' ? <Link2 size={11} /> : <Clock size={11} />}{' '}
+                          {blockReasonText(reason, step)}
+                        </span>
+                      )}
                     </span>
                     <button
                       className="icon-btn"
