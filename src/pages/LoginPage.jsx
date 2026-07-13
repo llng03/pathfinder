@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { Compass } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
+import { enterDemoMode } from '../lib/demoClient'
 import foxIcon from '../assets/foxIcon.png'
 
 export default function LoginPage() {
@@ -8,6 +10,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState(null)
   const [busy, setBusy] = useState(false)
+
+  function startDemo() {
+    enterDemoMode()
+    // Neu laden, damit der localStorage-Client die Supabase-Anbindung ersetzt
+    window.location.reload()
+  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -66,6 +74,16 @@ export default function LoginPage() {
         >
           {mode === 'signin' ? 'Noch kein Konto? Registrieren' : 'Zurück zur Anmeldung'}
         </button>
+
+        <div className="login-demo">
+          <button type="button" className="btn-ghost btn-sm" onClick={startDemo}>
+            <Compass size={16} /> Ohne Konto ausprobieren
+          </button>
+          <p>
+            Im Demo-Modus bleiben alle Daten in diesem Browser (localStorage) —
+            es wird nichts in der Datenbank gespeichert.
+          </p>
+        </div>
       </div>
     </div>
   )

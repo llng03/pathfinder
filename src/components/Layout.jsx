@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { Sun, TreePine, Compass, Lightbulb, Repeat, Sparkles } from 'lucide-react'
+import { Sun, TreePine, Compass, Lightbulb, Repeat, Sparkles, FlaskConical } from 'lucide-react'
+import { exitDemoMode, isDemoMode } from '../lib/demoClient'
 import foxIcon from '../assets/foxIcon.png'
 
 const NAV_ITEMS = [
@@ -36,7 +37,25 @@ export default function Layout({ children }) {
           </NavLink>
         ))}
       </nav>
-      <main className="app-main">{children}</main>
+      <main className="app-main">
+        {isDemoMode() && (
+          <div className="demo-banner">
+            <span>
+              <FlaskConical size={14} /> Demo-Modus — Daten bleiben nur in diesem Browser.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                exitDemoMode()
+                window.location.reload()
+              }}
+            >
+              Demo beenden
+            </button>
+          </div>
+        )}
+        {children}
+      </main>
     </div>
   )
 }

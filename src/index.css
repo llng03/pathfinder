@@ -720,6 +720,44 @@ label { font-size: 0.82rem; color: var(--text-dim); display: block; margin-botto
   margin-bottom: 1.5rem;
 }
 
+.login-demo {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--forest-700);
+}
+.login-demo p {
+  color: var(--text-faint);
+  font-size: 0.78rem;
+  margin-top: 0.5rem;
+}
+
+/* ---------- Demo-Modus ---------- */
+
+.demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--forest-850);
+  border: 1px dashed rgba(232, 176, 75, 0.5);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.demo-banner svg { color: var(--clarify); }
+.demo-banner button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--light-300);
+}
+.demo-banner button:hover { text-decoration: underline; }
+
 /* ---------- Icons (lucide) ---------- */
 
 svg.lucide {
