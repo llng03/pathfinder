@@ -129,6 +129,16 @@ Schritt" vorgeschlagen werden, die ich gerade wirklich ausführen kann.
 - AK9: In der "Heute"-Ansicht (US-6) werden blockierte Fokusaufgaben visuell als "noch nicht bereit" gekennzeichnet, statt einfach wie normale offene Aufgaben zu wirken.
 - AK10: Die "Braucht Klärung"-Logik (US-7) bleibt unverändert bestehen — ein zeitlich/durch Abhängigkeit blockierter, aber klar definierter Schritt zählt weiterhin als "vorhandener nächster Schritt" und löst **keine** "Braucht Klärung"-Markierung aus (Blockierung ist kein Klarheits-Problem, sondern ein Timing-Problem).
 
+### 3.10 Logischer Tag (Tagesgrenze statt Mitternacht)
+**US-10:** Als Nutzerin, die oft erst nach Mitternacht schlafen geht, möchte
+ich, dass der "Tag" für Tracking-Zwecke nicht um 00:00 Uhr, sondern erst um
+03:30 Uhr wechselt — damit späte Gewohnheiten (z. B. Zähneputzen um 00:30)
+noch dem richtigen (vorherigen) Tag zugerechnet werden.
+- AK1: Es gibt eine globale, feste Tagesgrenze von **03:30 Uhr**. Alle Zeitpunkte vor dieser Uhrzeit zählen noch zum vorherigen Kalendertag ("logischer Tag").
+- AK2: Diese Regel gilt **überall, wo "heutiger Tag" für Tracking-Zwecke bestimmt wird**: Gewohnheiten-Tracking (HabitLogs, Heatmap, Streaks, Never-miss-twice), "Heute"-Fokusaufgaben-Ansicht, allgemeine Aktivitäts-Streaks (US-4, AK4 / Badges `streak_3`/`streak_7`/`streak_30`/`streak_60`), "Perfekte Woche"-Badge.
+- AK3: **Nicht betroffen:** nutzerdefinierte Zeitangaben (z. B. Zeitbindung eines Schritts wie "Mo 14:00", US-9) — diese bleiben reale Kalenderzeit. Die Tagesgrenze betrifft ausschließlich die Frage "welchem Tag gehört meine aktuelle Aktivität an", nicht feste Termine.
+- AK4: Die Grenze ist in v1 fest im Code hinterlegt, kein einstellbares Nutzer-Setting.
+
 ## 4. Nicht-funktionale Anforderungen
 
 | Kategorie | Anforderung |
@@ -153,6 +163,7 @@ Schritt" vorgeschlagen werden, die ich gerade wirklich ausführen kann.
 - Fokusaufgaben für heute (US-6)
 - "Braucht Klärung"-Markierung (US-7)
 - Zeitliche & inhaltliche Abhängigkeiten von Schritten (US-9)
+- Logischer Tag / Tagesgrenze 03:30 Uhr (US-10)
 - Zeitliche Bindung & Abhängigkeiten zwischen Schritten (US-9)
 
 **Should have**

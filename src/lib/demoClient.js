@@ -2,7 +2,7 @@
 // (Query-Builder + Auth) auf localStorage ab. Es wird nichts an die
 // Datenbank geschickt — alle Daten bleiben im Browser.
 
-import { todayStr, addDays } from './dates.js'
+import { addDays, getLogicalDate } from './dates.js'
 
 const FLAG_KEY = 'pathfinder-demo-mode'
 const DB_KEY = 'pathfinder-demo-db'
@@ -92,8 +92,8 @@ const TABLE_DEFAULTS = {
   sprints: () => ({ status: 'active', completed_at: null, total_tasks: null, done_tasks: null }),
   sprint_tasks: () => ({ is_today_focus: false, focus_date: null }),
   habits: () => ({ archived_at: null }),
-  habit_logs: () => ({ log_date: todayStr() }),
-  activity_days: () => ({ activity_date: todayStr() }),
+  habit_logs: () => ({ log_date: getLogicalDate() }),
+  activity_days: () => ({ activity_date: getLogicalDate() }),
   badges: () => ({ earned_at: new Date().toISOString() }),
   step_dependencies: () => ({}),
 }
@@ -471,7 +471,7 @@ export function createDemoClient() {
 
 function buildSeedDb() {
   const db = emptyDb()
-  const today = todayStr()
+  const today = getLogicalDate()
   const d = (n) => addDays(today, -n)
   const ts = (n) => new Date(Date.now() - n * 86400000).toISOString()
   const uid = DEMO_USER_ID

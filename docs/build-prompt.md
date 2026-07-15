@@ -188,6 +188,27 @@ motivierend visualisiert.
   aber klar definierter Schritt zählt weiterhin als vorhandener nächster
   Schritt und löst keine "Braucht Klärung"-Markierung aus
 
+### 10. Logischer Tag (Tagesgrenze 03:30 Uhr statt Mitternacht)
+- Zentrale Utility-Funktion einführen, z. B. `getLogicalDate(date, tz)`:
+  gibt für einen Zeitpunkt den zugehörigen "logischen Tag" zurück — liegt
+  die Uhrzeit vor 03:30, gilt sie noch als Vortag
+- **Alle Stellen, die den "heutigen Tag" bestimmen, müssen diese Funktion
+  nutzen** statt direkt auf Kalendertag/Mitternacht zu prüfen:
+  - `HabitLogs` (welchem Tag ein Eintrag zugeordnet wird)
+  - Habit-Heatmap-Darstellung
+  - Habit-Streak-Berechnung & "Never miss twice"-Logik
+  - "Heute"-Fokusaufgaben-Ansicht (welche Sprinttasks als "heute" gelten)
+  - Allgemeine Aktivitäts-Streak-Badges (`streak_3`, `streak_7`, `streak_30`, `streak_60`)
+  - `perfect_week`-Badge-Berechnung
+- **Nicht betroffen:** `Steps.scheduled_date`/`scheduled_time` (US-9) — das
+  sind reale, vom Nutzer gesetzte Termine und bleiben unverändert
+- Grenze ist ein fester Wert (03:30), kein Nutzer-Setting in v1 — am besten
+  trotzdem als benannte Konstante (z. B. `DAY_BOUNDARY_HOUR = 3`,
+  `DAY_BOUNDARY_MINUTE = 30`) statt magischer Zahl im Code, damit es leicht
+  auffindbar/änderbar bleibt
+- Zeitzone beachten: Berechnung sollte in der lokalen Zeitzone der Nutzerin
+  erfolgen, nicht in UTC (sonst verschiebt sich die Grenze falsch)
+
 ## Nicht-funktionale Vorgaben
 - Kernansichten (Dashboard, aktueller Sprint) sollen schnell laden
 - Keine Erinnerungen/Notifications in dieser Version

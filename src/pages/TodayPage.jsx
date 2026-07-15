@@ -11,7 +11,7 @@ import {
   formatSchedule,
   scheduledAt,
 } from '../lib/availability'
-import { formatDate, todayStr } from '../lib/dates'
+import { addDays, formatDate, getLogicalDate } from '../lib/dates'
 import { currentStreak, missedTwice } from '../lib/streaks'
 import {
   badgeToastText,
@@ -37,7 +37,8 @@ export default function TodayPage() {
   const [habitLogs, setHabitLogs] = useState([])
   const [activityDates, setActivityDates] = useState([])
 
-  const today = todayStr()
+  // Logischer Tag: vor 03:30 Uhr zählt alles noch zum Vortag
+  const today = getLogicalDate()
 
   async function load() {
     const [
@@ -207,8 +208,7 @@ export default function TodayPage() {
   const missedHabits = habits.filter((h) => {
     const dates = habitLogs.filter((l) => l.habit_id === h.id).map((l) => l.log_date)
     // Hinweis nur, wenn die Gewohnheit alt genug ist, um zwei Tage verpasst zu haben
-    return h.created_at.slice(0, 10) <= todayStr(new Date(Date.now() - 2 * 86400000)) &&
-      missedTwice(dates)
+    return h.created_at.slice(0, 10) <= addDays(today, -2) && missedTwice(dates)
   })
 
   return (

@@ -4,7 +4,7 @@ import { Compass, TreePine, Tent, Star, Check, Hourglass, Plus } from 'lucide-re
 import { supabase } from '../lib/supabaseClient'
 import { buildTree, pathToStep } from '../lib/tree'
 import { buildDepsByStep } from '../lib/availability'
-import { addDays, daysUntil, formatDate, todayStr } from '../lib/dates'
+import { addDays, daysUntil, formatDate, getLogicalDate } from '../lib/dates'
 import {
   awardBadge,
   badgeToastText,
@@ -117,7 +117,7 @@ export default function SprintPage() {
   }
 
   async function toggleFocus(task) {
-    const today = todayStr()
+    const today = getLogicalDate()
     const isFocusedToday = task.is_today_focus && task.focus_date === today
     await supabase
       .from('sprint_tasks')
@@ -211,7 +211,7 @@ export default function SprintPage() {
       showToast('Wähle mindestens einen Schritt aus')
       return
     }
-    const start = todayStr()
+    const start = getLogicalDate()
     const end = addDays(start, 13) // fester 2-Wochen-Zeitraum
     const { data: sprint, error } = await supabase
       .from('sprints')
@@ -261,7 +261,7 @@ export default function SprintPage() {
   if (activeSprint) {
     const doneCount = tasks.filter((t) => stepById.get(t.step_id)?.is_done).length
     const remaining = daysUntil(activeSprint.end_date)
-    const today = todayStr()
+    const today = getLogicalDate()
 
     // Aufgaben nach Ziel gruppieren
     const groups = new Map()
@@ -447,7 +447,7 @@ export default function SprintPage() {
           <div className="card prominent">
             <h3>Trail planen</h3>
             <p className="muted">
-              Zeitraum: {formatDate(todayStr())} – {formatDate(addDays(todayStr(), 13))} (2 Wochen)
+              Zeitraum: {formatDate(getLogicalDate())} – {formatDate(addDays(getLogicalDate(), 13))} (2 Wochen)
             </p>
             <p className="muted">
               Wähle Schritte aus deinen Zielen — auf jeder beliebigen Ebene, vom großen

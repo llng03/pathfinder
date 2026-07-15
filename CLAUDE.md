@@ -48,6 +48,7 @@ Wichtige Flags nicht vergessen:
 
 - **Kein Kanban-Board.** Sprintaufgaben werden abgehakt, nicht durch Statusspalten bewegt.
 - **Schritte sind unbegrenzt tief verschachtelbar** (Steps können eigene Unterschritte haben). Jede Ebene ist einzeln einplanbar (Sprint) und einzeln abhakbar.
+- **Logischer Tag statt Kalendertag:** "Heutiger Tag" wechselt erst um 03:30 Uhr, nicht um Mitternacht. Gilt für Gewohnheiten-Tracking, "Heute"-Ansicht, Aktivitäts-Streaks, `perfect_week`-Badge. Immer die zentrale `getLogicalDate()`-Utility verwenden, nie direkt Kalendertag/Mitternacht prüfen. Nutzerdefinierte Termine (`scheduled_date`/`scheduled_time`) sind davon nicht betroffen.
 - **"Heute"-Ansicht ist der Standard-Startbildschirm**, nicht die volle Sprintliste.
 - **KI-Vorschläge (falls in v2 ergänzt) werden nie automatisch übernommen** — Nutzerin muss jeden Schritt bestätigen/bearbeiten können.
 - **Keine Push-Notifications.** Hinweise (z. B. "Never miss twice") erscheinen nur In-App beim nächsten Öffnen.

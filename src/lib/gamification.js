@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient'
-import { todayStr } from './dates'
+import { addDays, getLogicalDate } from './dates'
 import { currentStreak } from './streaks'
 import { BADGES } from './badges'
 
@@ -19,13 +19,13 @@ export async function awardBadge(badgeKey) {
   return data && data.length > 0 ? badgeKey : null
 }
 
-// Heutigen Tag als "aktiv" verbuchen und Streak-Badges prüfen.
+// Heutigen (logischen) Tag als "aktiv" verbuchen und Streak-Badges prüfen.
 // Gibt neu verdiente Badge-Keys zurück.
 export async function recordActivity() {
   await supabase
     .from('activity_days')
     .upsert(
-      { activity_date: todayStr() },
+      { activity_date: getLogicalDate() },
       { onConflict: 'user_id,activity_date', ignoreDuplicates: true }
     )
 
@@ -42,7 +42,7 @@ export async function recordActivity() {
   // "Jahreszeiten im Wald": erste Aktivität liegt mindestens ein Jahr zurück
   if (dates.length > 0) {
     const first = dates.reduce((a, b) => (a < b ? a : b))
-    if (first <= todayStr(new Date(Date.now() - 365 * 86400000))) {
+    if (first <= addDays(getLogicalDate(), -365)) {
       earned.push(await awardBadge('one_year_active'))
     }
   }
@@ -57,10 +57,10 @@ export async function habitStreakBadges(streak) {
   return earned.filter(Boolean)
 }
 
-// "Klare Sicht": an jedem der letzten 7 Tage gab es mindestens eine
-// Fokusaufgabe, und alle Fokusaufgaben dieser Tage sind erledigt
+// "Klare Sicht": an jedem der letzten 7 (logischen) Tage gab es mindestens
+// eine Fokusaufgabe, und alle Fokusaufgaben dieser Tage sind erledigt
 async function checkPerfectWeek() {
-  const since = todayStr(new Date(Date.now() - 6 * 86400000))
+  const since = addDays(getLogicalDate(), -6)
   const { data } = await supabase
     .from('sprint_tasks')
     .select('focus_date, steps ( is_done )')

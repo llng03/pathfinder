@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Repeat, Plus, Flame, Moon, Archive, Undo2, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
-import { addDays, todayStr, weekdayShort } from '../lib/dates'
+import { addDays, getLogicalDate, weekdayShort } from '../lib/dates'
 import { currentStreak, missedTwice } from '../lib/streaks'
 import { awardBadge, badgeToastText, habitStreakBadges, recordActivity } from '../lib/gamification'
 import { useToast } from '../context/ToastContext.jsx'
@@ -11,12 +11,12 @@ const HEATMAP_WEEKS = 16
 
 // Kalender-Heatmap: Spalten = Wochen (Mo–So), letzte 16 Wochen
 function Heatmap({ dates }) {
-  const today = todayStr()
+  const today = getLogicalDate()
   const set = new Set(dates)
 
-  // Montag der aktuellen Woche finden, dann 16 Wochen zurück
-  const now = new Date()
-  const mondayOffset = (now.getDay() + 6) % 7
+  // Montag der aktuellen (logischen) Woche finden, dann 16 Wochen zurück
+  const [ty, tm, td] = today.split('-').map(Number)
+  const mondayOffset = (new Date(ty, tm - 1, td).getDay() + 6) % 7
   const currentMonday = addDays(today, -mondayOffset)
   const start = addDays(currentMonday, -(HEATMAP_WEEKS - 1) * 7)
 
@@ -47,7 +47,7 @@ export default function HabitsPage() {
   const [title, setTitle] = useState('')
   const [showArchived, setShowArchived] = useState(false)
 
-  const today = todayStr()
+  const today = getLogicalDate()
 
   async function load() {
     const [{ data: habitRows }, { data: logRows }] = await Promise.all([
@@ -146,8 +146,7 @@ export default function HabitsPage() {
         const habitDates = logs.filter((l) => l.habit_id === habit.id).map((l) => l.log_date)
         const doneToday = habitDates.includes(today)
         const streak = currentStreak(habitDates)
-        const oldEnough =
-          habit.created_at.slice(0, 10) <= todayStr(new Date(Date.now() - 2 * 86400000))
+        const oldEnough = habit.created_at.slice(0, 10) <= addDays(today, -2)
         const showMissedHint = oldEnough && missedTwice(habitDates)
 
         return (
